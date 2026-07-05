@@ -240,6 +240,16 @@ const Index = () => {
           <Footer />
         </main>
       </div>
+
+      {/* Command palette (⌘K) */}
+      <CommandPalette />
+
+      {/* Satellite detail modal — opens when a marker is clicked in the 3D scene */}
+      <Dialog open={!!selectedSat} onOpenChange={(o) => !o && setSelectedSat(null)}>
+        <DialogContent className="max-w-lg p-0 bg-transparent border-0 shadow-none">
+          {selectedSat && <SatelliteDetailPanel satellite={selectedSat} compact />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
