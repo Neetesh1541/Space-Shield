@@ -8,7 +8,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Shield, Bell, Settings, Menu, Rocket, Globe, HelpCircle, User, LogOut, Crown } from 'lucide-react';
+import { Bell, Settings, Menu, Rocket, Globe, HelpCircle, User, LogOut, Crown, Command } from 'lucide-react';
+import logoUrl from '@/assets/spaceshield-logo.png';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -29,17 +30,15 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
 
           <button onClick={() => navigate('/')} className="flex items-center gap-3 hover:opacity-90 transition-opacity">
             <div className="relative">
-              <div className="absolute inset-0 bg-primary/30 blur-xl rounded-full animate-pulse" />
-              <div className="relative p-2 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/30">
-                <Shield className="h-6 w-6 text-primary" />
-              </div>
+              <div className="absolute inset-0 bg-primary/40 blur-2xl rounded-full animate-pulse" />
+              <img src={logoUrl} alt="SpaceShield logo" width={40} height={40} className="relative h-10 w-10 object-contain drop-shadow-[0_0_12px_hsl(var(--primary)/0.6)]" />
             </div>
             <div className="text-left">
-              <h1 className="font-bold text-lg tracking-tight">
-                Space<span className="text-primary">Shield</span>
+              <h1 className="font-bold text-lg tracking-tight leading-none">
+                Space<span className="text-gradient">Shield</span>
               </h1>
-              <p className="text-[10px] text-muted-foreground -mt-0.5 hidden sm:block">
-                Ultimate Space Protection System
+              <p className="text-[10px] text-muted-foreground mt-0.5 hidden sm:block tracking-wider uppercase">
+                Orbital Defense · Collision Intelligence
               </p>
             </div>
           </button>
