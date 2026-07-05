@@ -14,12 +14,16 @@ import { CollisionAlertBanner } from '@/components/dashboard/CollisionAlertBanne
 import { PlanetaryDataPanel } from '@/components/dashboard/PlanetaryDataPanel';
 import { SpaceMissionsPanel } from '@/components/dashboard/SpaceMissionsPanel';
 import { ISSTrackerPanel } from '@/components/dashboard/ISSTrackerPanel';
+import { SatelliteDetailPanel } from '@/components/dashboard/SatelliteDetailPanel';
+import { CommandPalette } from '@/components/layout/CommandPalette';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useWorldSatellites } from '@/hooks/useWorldSatellites';
 import { useAsteroidData } from '@/hooks/useAsteroidData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import type { Satellite } from '@/types/space';
 import { 
-  Satellite, 
+  Satellite as SatelliteIcon, 
   Globe, 
   AlertTriangle, 
   Shield,
@@ -32,6 +36,7 @@ import {
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSolarSystem, setShowSolarSystem] = useState(false);
+  const [selectedSat, setSelectedSat] = useState<Satellite | null>(null);
   const { satellites, isLoading: satellitesLoading, stats: satelliteStats, spaceDebris } = useWorldSatellites();
   const { data: asteroids } = useAsteroidData();
 
