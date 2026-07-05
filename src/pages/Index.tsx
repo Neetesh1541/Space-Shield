@@ -70,7 +70,7 @@ const Index = () => {
               title="Active Satellites"
               value={satelliteStats.total}
               subtitle={`${satelliteStats.byOrbit.LEO} LEO • ${satelliteStats.byOrbit.GEO} GEO`}
-              icon={Satellite}
+              icon={SatelliteIcon}
               variant="glow"
             />
             <StatsCard
