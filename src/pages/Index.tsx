@@ -14,12 +14,16 @@ import { CollisionAlertBanner } from '@/components/dashboard/CollisionAlertBanne
 import { PlanetaryDataPanel } from '@/components/dashboard/PlanetaryDataPanel';
 import { SpaceMissionsPanel } from '@/components/dashboard/SpaceMissionsPanel';
 import { ISSTrackerPanel } from '@/components/dashboard/ISSTrackerPanel';
+import { SatelliteDetailPanel } from '@/components/dashboard/SatelliteDetailPanel';
+import { CommandPalette } from '@/components/layout/CommandPalette';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useWorldSatellites } from '@/hooks/useWorldSatellites';
 import { useAsteroidData } from '@/hooks/useAsteroidData';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import type { Satellite } from '@/types/space';
 import { 
-  Satellite, 
+  Satellite as SatelliteIcon, 
   Globe, 
   AlertTriangle, 
   Shield,
@@ -32,6 +36,7 @@ import {
 const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showSolarSystem, setShowSolarSystem] = useState(false);
+  const [selectedSat, setSelectedSat] = useState<Satellite | null>(null);
   const { satellites, isLoading: satellitesLoading, stats: satelliteStats, spaceDebris } = useWorldSatellites();
   const { data: asteroids } = useAsteroidData();
 
@@ -39,7 +44,7 @@ const Index = () => {
   const highRiskDebris = spaceDebris?.filter(d => d.riskLevel === 'high').length || 0;
 
   return (
-    <div className="min-h-screen bg-background stars-bg">
+    <div className="min-h-screen bg-background nebula-bg stars-bg">
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       <div className="flex">
@@ -65,7 +70,7 @@ const Index = () => {
               title="Active Satellites"
               value={satelliteStats.total}
               subtitle={`${satelliteStats.byOrbit.LEO} LEO • ${satelliteStats.byOrbit.GEO} GEO`}
-              icon={Satellite}
+              icon={SatelliteIcon}
               variant="glow"
             />
             <StatsCard
@@ -125,7 +130,12 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 3D Earth/Solar System View - Takes 2 columns */}
             <div className="lg:col-span-2 h-[500px] md:h-[600px] rounded-xl overflow-hidden border border-border/50 bg-card/30 backdrop-blur relative">
-              <EarthScene satellites={satellites} showSolarSystem={showSolarSystem} />
+              <EarthScene
+                satellites={satellites}
+                showSolarSystem={showSolarSystem}
+                onSelectSatellite={setSelectedSat}
+                selectedId={selectedSat?.id ?? null}
+              />
               
               {/* View Toggle */}
               <div className="absolute top-4 left-4 flex gap-2">
@@ -230,6 +240,16 @@ const Index = () => {
           <Footer />
         </main>
       </div>
+
+      {/* Command palette (⌘K) */}
+      <CommandPalette />
+
+      {/* Satellite detail modal — opens when a marker is clicked in the 3D scene */}
+      <Dialog open={!!selectedSat} onOpenChange={(o) => !o && setSelectedSat(null)}>
+        <DialogContent className="max-w-lg p-0 bg-transparent border-0 shadow-none">
+          {selectedSat && <SatelliteDetailPanel satellite={selectedSat} compact />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
