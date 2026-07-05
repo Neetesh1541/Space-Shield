@@ -10,6 +10,8 @@ import { Globe } from 'lucide-react';
 interface EarthProps {
   satellites: Satellite[];
   showSolarSystem?: boolean;
+  onSelectSatellite?: (sat: Satellite) => void;
+  selectedId?: string | null;
 }
 
 // Moon Component
@@ -139,13 +141,72 @@ const Earth = () => {
 const AtmosphereGlow = () => {
   return (
     <>
-      <Sphere args={[1.02, 64, 64]}>
-        <meshBasicMaterial color="#4fc3f7" transparent opacity={0.15} side={THREE.BackSide} />
+      <Sphere args={[1.015, 64, 64]}>
+        <meshBasicMaterial color="#7fdfff" transparent opacity={0.22} side={THREE.BackSide} />
       </Sphere>
       <Sphere args={[1.05, 64, 64]}>
-        <meshBasicMaterial color="#00bcd4" transparent opacity={0.08} side={THREE.BackSide} />
+        <meshBasicMaterial color="#22d3ee" transparent opacity={0.12} side={THREE.BackSide} />
+      </Sphere>
+      <Sphere args={[1.12, 64, 64]}>
+        <meshBasicMaterial color="#0891b2" transparent opacity={0.05} side={THREE.BackSide} />
       </Sphere>
     </>
+  );
+};
+
+// Clickable satellite markers (visible spheres w/ hover label + click)
+interface SatelliteMarkersProps {
+  satellites: Satellite[];
+  onSelect?: (sat: Satellite) => void;
+  selectedId?: string | null;
+}
+
+const riskColor = (r: Satellite['riskLevel']) => r === 'critical' ? '#ff3355' : r === 'warning' ? '#ffb020' : '#33ffaa';
+
+const SatelliteMarkers = ({ satellites, onSelect, selectedId }: SatelliteMarkersProps) => {
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  // Show up to 60 as interactive meshes to keep FPS smooth
+  const list = useMemo(() => {
+    const sorted = [...satellites].sort((a, b) => {
+      const w = (x: Satellite) => x.riskLevel === 'critical' ? 0 : x.riskLevel === 'warning' ? 1 : 2;
+      return w(a) - w(b);
+    });
+    return sorted.slice(0, 60);
+  }, [satellites]);
+
+  return (
+    <group>
+      {list.map((sat) => {
+        const isSel = selectedId === sat.id;
+        const isHover = hoverId === sat.id;
+        const c = riskColor(sat.riskLevel);
+        return (
+          <group key={sat.id} position={[sat.position.x, sat.position.y, sat.position.z]}>
+            <mesh
+              onPointerOver={(e) => { e.stopPropagation(); setHoverId(sat.id); document.body.style.cursor = 'pointer'; }}
+              onPointerOut={() => { setHoverId(null); document.body.style.cursor = 'default'; }}
+              onClick={(e) => { e.stopPropagation(); onSelect?.(sat); }}
+            >
+              <sphereGeometry args={[isSel || isHover ? 0.045 : 0.028, 12, 12]} />
+              <meshStandardMaterial color={c} emissive={c} emissiveIntensity={isSel ? 2 : isHover ? 1.4 : 0.8} />
+            </mesh>
+            {/* halo */}
+            <mesh>
+              <sphereGeometry args={[0.07, 16, 16]} />
+              <meshBasicMaterial color={c} transparent opacity={isSel ? 0.35 : isHover ? 0.22 : 0.08} />
+            </mesh>
+            {(isHover || isSel) && (
+              <Html distanceFactor={8} style={{ pointerEvents: 'none' }}>
+                <div className="glass-panel px-2 py-1 text-[10px] whitespace-nowrap -translate-y-6 border border-primary/40">
+                  <div className="font-semibold text-primary">{sat.name}</div>
+                  <div className="text-muted-foreground">{sat.orbitType} · {sat.altitude.toLocaleString()} km · {sat.riskLevel.toUpperCase()}</div>
+                </div>
+              </Html>
+            )}
+          </group>
+        );
+      })}
+    </group>
   );
 };
 
@@ -256,14 +317,14 @@ const AsteroidBelt = () => {
   );
 };
 
-const Scene = ({ satellites, showSolarSystem = false }: EarthProps) => {
+const Scene = ({ satellites, showSolarSystem = false, onSelectSatellite, selectedId }: EarthProps) => {
   return (
     <>
-      <ambientLight intensity={0.2} />
-      <directionalLight position={[5, 3, 5]} intensity={1.2} />
-      <pointLight position={[-10, -10, -10]} intensity={0.3} color="#4fc3f7" />
+      <ambientLight intensity={0.25} />
+      <directionalLight position={[5, 3, 5]} intensity={1.4} />
+      <pointLight position={[-10, -10, -10]} intensity={0.4} color="#22d3ee" />
       
-      <Stars radius={100} depth={50} count={8000} factor={4} saturation={0} fade speed={1} />
+      <Stars radius={100} depth={50} count={showSolarSystem ? 6000 : 12000} factor={4} saturation={0} fade speed={1} />
       
       {showSolarSystem && <RealisticSun />}
       
@@ -274,6 +335,7 @@ const Scene = ({ satellites, showSolarSystem = false }: EarthProps) => {
       <Moon />
       <OrbitalRings />
       <SatellitePoints satellites={satellites} />
+      <SatelliteMarkers satellites={satellites} onSelect={onSelectSatellite} selectedId={selectedId} />
       
       {showSolarSystem && (
         <>
@@ -294,9 +356,36 @@ const Scene = ({ satellites, showSolarSystem = false }: EarthProps) => {
         minDistance={1.5}
         maxDistance={showSolarSystem ? 50 : 10}
         autoRotate
-        autoRotateSpeed={0.2}
+        autoRotateSpeed={0.15}
       />
     </>
+  );
+};
+
+const LoadingFallback = () => (
+  <div className="w-full h-full flex items-center justify-center bg-gradient-radial from-secondary/20 to-background">
+    <div className="text-center">
+      <div className="relative">
+        <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full animate-pulse" />
+        <Globe className="h-16 w-16 text-primary relative animate-spin" style={{ animationDuration: '3s' }} />
+      </div>
+      <p className="mt-4 text-sm text-muted-foreground">Loading Earth View...</p>
+    </div>
+  </div>
+);
+
+export const EarthScene = ({ satellites, showSolarSystem = false, onSelectSatellite, selectedId }: EarthProps) => {
+  return (
+    <div className="w-full h-full relative">
+      <Suspense fallback={<LoadingFallback />}>
+        <Canvas
+          camera={{ position: showSolarSystem ? [0, 5, 15] : [0, 0, 3], fov: 45 }}
+          gl={{ antialias: true, alpha: true }}
+        >
+          <Scene satellites={satellites} showSolarSystem={showSolarSystem} onSelectSatellite={onSelectSatellite} selectedId={selectedId} />
+        </Canvas>
+      </Suspense>
+    </div>
   );
 };
 
