@@ -388,30 +388,3 @@ export const EarthScene = ({ satellites, showSolarSystem = false, onSelectSatell
     </div>
   );
 };
-
-const LoadingFallback = () => (
-  <div className="w-full h-full flex items-center justify-center bg-gradient-radial from-secondary/20 to-background">
-    <div className="text-center">
-      <div className="relative">
-        <div className="absolute inset-0 bg-primary/30 blur-2xl rounded-full animate-pulse" />
-        <Globe className="h-16 w-16 text-primary relative animate-spin" style={{ animationDuration: '3s' }} />
-      </div>
-      <p className="mt-4 text-sm text-muted-foreground">Loading Earth View...</p>
-    </div>
-  </div>
-);
-
-export const EarthScene = ({ satellites, showSolarSystem = false }: EarthProps) => {
-  return (
-    <div className="w-full h-full relative">
-      <Suspense fallback={<LoadingFallback />}>
-        <Canvas
-          camera={{ position: showSolarSystem ? [0, 5, 15] : [0, 0, 3], fov: 45 }}
-          gl={{ antialias: true, alpha: true }}
-        >
-          <Scene satellites={satellites} showSolarSystem={showSolarSystem} />
-        </Canvas>
-      </Suspense>
-    </div>
-  );
-};
