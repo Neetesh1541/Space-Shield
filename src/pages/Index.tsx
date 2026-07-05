@@ -130,7 +130,12 @@ const Index = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 3D Earth/Solar System View - Takes 2 columns */}
             <div className="lg:col-span-2 h-[500px] md:h-[600px] rounded-xl overflow-hidden border border-border/50 bg-card/30 backdrop-blur relative">
-              <EarthScene satellites={satellites} showSolarSystem={showSolarSystem} />
+              <EarthScene
+                satellites={satellites}
+                showSolarSystem={showSolarSystem}
+                onSelectSatellite={setSelectedSat}
+                selectedId={selectedSat?.id ?? null}
+              />
               
               {/* View Toggle */}
               <div className="absolute top-4 left-4 flex gap-2">
