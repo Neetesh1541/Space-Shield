@@ -13,6 +13,8 @@ import {
   Layers,
   Zap,
   Sun,
+  Radio,
+  Database,
 } from 'lucide-react';
 
 interface NavItemProps {
@@ -85,6 +87,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-3 mb-2">
               Monitoring
             </p>
+            <NavItem icon={Radio} label="Mission Control" isActive={location.pathname === '/mission-control'} onClick={() => handleNav('/mission-control')} />
             <NavItem icon={Globe} label="Earth View" isActive={location.pathname === '/'} onClick={() => handleNav('/')} />
             <NavItem icon={Satellite} label="Satellites" badge={390} isActive={location.pathname === '/satellites'} onClick={() => handleNav('/satellites')} />
             <NavItem icon={Orbit} label="Space Debris" badge={98} isActive={location.pathname === '/space-debris'} onClick={() => handleNav('/space-debris')} />
@@ -98,6 +101,7 @@ export const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
             <p className="text-[10px] uppercase tracking-wider text-muted-foreground px-3 mb-2">
               Exploration
             </p>
+            <NavItem icon={Database} label="Space Database" isActive={location.pathname === '/space-data'} onClick={() => handleNav('/space-data')} />
             <NavItem icon={Sun} label="Solar System" isActive={location.pathname === '/solar-system'} onClick={() => handleNav('/solar-system')} />
 
             <div className="py-3">

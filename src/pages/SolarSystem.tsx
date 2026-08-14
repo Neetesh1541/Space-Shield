@@ -29,7 +29,7 @@ const SolarSystem = () => {
   const { satellites, stats } = useWorldSatellites();
 
   return (
-    <div className="min-h-screen bg-background stars-bg">
+    <div className="min-h-screen bg-background stars-bg nebula-bg aurora-bg">
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       <div className="flex">

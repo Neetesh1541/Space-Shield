@@ -44,7 +44,7 @@ const Index = () => {
   const highRiskDebris = spaceDebris?.filter(d => d.riskLevel === 'high').length || 0;
 
   return (
-    <div className="min-h-screen bg-background nebula-bg stars-bg">
+    <div className="min-h-screen bg-background nebula-bg stars-bg aurora-bg">
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       <div className="flex">
