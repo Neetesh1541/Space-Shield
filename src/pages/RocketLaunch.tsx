@@ -472,7 +472,9 @@ const RocketLaunch = () => {
                   <div className="absolute top-4 left-4 glass-panel px-4 py-2">
                     <div className="flex items-center gap-2">
                       <Timer className="h-4 w-4 text-primary" />
-                      <span className="font-mono text-lg text-foreground">{formatTime(time)}</span>
+                      <span className="font-mono text-lg text-foreground">
+                        {countdown !== null ? `T-00:${String(countdown).padStart(2, '0')}` : formatTime(time)}
+                      </span>
                     </div>
                   </div>
 
@@ -493,9 +495,9 @@ const RocketLaunch = () => {
                 <CardContent className="p-4 border-t border-border/50">
                   <div className="flex items-center justify-center gap-4">
                     {!isLaunched ? (
-                      <Button onClick={handleLaunch} variant="glow" size="lg" className="relative z-10">
+                      <Button onClick={handleLaunch} disabled={countdown !== null} variant="glow" size="lg" className="relative z-10">
                         <Play className="h-5 w-5 mr-2" />
-                        Launch
+                        {countdown !== null ? `Terminal count T-${countdown}` : 'Start Launch Sequence'}
                       </Button>
                     ) : (
                       <>
@@ -580,6 +582,46 @@ const RocketLaunch = () => {
                     <p className="text-xs text-muted-foreground mb-2">Acceleration</p>
                     <p className="text-2xl font-bold text-primary">{telemetry.acceleration.toFixed(1)} m/s²</p>
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Flight Data */}
+              <Card className="glass-panel">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Flight Data</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-2 gap-3 text-sm">
+                  {[
+                    { l: 'Dynamic Pressure', v: `${telemetry.dynamicPressure.toFixed(1)} kPa` },
+                    { l: 'Max-Q', v: `${telemetry.maxQ.toFixed(1)} kPa` },
+                    { l: 'G-Force', v: `${telemetry.gForce.toFixed(2)} g` },
+                    { l: 'Throttle', v: `${telemetry.throttle.toFixed(0)} %` },
+                    { l: 'Downrange', v: `${(telemetry.downrange / 1000).toFixed(1)} km` },
+                    { l: 'Pitch', v: `${telemetry.pitch.toFixed(1)}°` },
+                    { l: 'Vehicle Mass', v: `${(telemetry.mass / 1000).toFixed(1)} t` },
+                    { l: 'Apoapsis Est.', v: `${(telemetry.apoapsis / 1000).toFixed(0)} km` },
+                  ].map((d) => (
+                    <div key={d.l} className="p-2 rounded-lg bg-secondary/30 border border-border/30">
+                      <p className="text-[10px] text-muted-foreground uppercase">{d.l}</p>
+                      <p className="font-mono text-foreground">{d.v}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Flight Callouts */}
+              <Card className="glass-panel">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Flight Callouts</CardTitle>
+                </CardHeader>
+                <CardContent className="max-h-[240px] overflow-y-auto space-y-1.5 font-mono text-[11px]">
+                  {events.length === 0 && <p className="text-muted-foreground">Vehicle on the pad. Awaiting terminal count.</p>}
+                  {events.map((e, i) => (
+                    <div key={i} className="flex gap-2">
+                      <span className="text-primary/70 shrink-0">{formatTime(e.t)}</span>
+                      <span className="text-muted-foreground">{e.msg}</span>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
 
