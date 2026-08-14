@@ -111,6 +111,8 @@ const Planet = ({ name, color, size, orbitRadius, orbitSpeed, hasRing, ringColor
 
 // Realistic Sun (multi-layer animated corona)
 import { RealisticSun } from './RealisticSun';
+import { EarthOrbitGroup } from './EarthOrbitGroup';
+
 
 const Earth = () => {
   const earthRef = useRef<THREE.Mesh>(null);
