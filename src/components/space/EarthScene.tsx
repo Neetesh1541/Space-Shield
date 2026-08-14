@@ -328,14 +328,17 @@ const Scene = ({ satellites, showSolarSystem = false, onSelectSatellite, selecte
       
       {showSolarSystem && <RealisticSun />}
       
-      <Suspense fallback={null}>
-        <Earth />
-      </Suspense>
-      <AtmosphereGlow />
-      <Moon />
-      <OrbitalRings />
-      <SatellitePoints satellites={satellites} />
-      <SatelliteMarkers satellites={satellites} onSelect={onSelectSatellite} selectedId={selectedId} />
+      <EarthOrbitGroup active={showSolarSystem}>
+        <Suspense fallback={null}>
+          <Earth />
+        </Suspense>
+        <AtmosphereGlow />
+        <Moon />
+        <OrbitalRings />
+        <SatellitePoints satellites={satellites} />
+        <SatelliteMarkers satellites={satellites} onSelect={onSelectSatellite} selectedId={selectedId} />
+      </EarthOrbitGroup>
+
       
       {showSolarSystem && (
         <>
