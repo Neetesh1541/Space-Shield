@@ -156,6 +156,7 @@ const Planet = ({
 
 // Realistic Sun (multi-layer animated corona)
 import { RealisticSun } from './RealisticSun';
+import { EarthOrbitGroup } from './EarthOrbitGroup';
 
 const Earth = ({ isPaused, orbitSpeed }: { isPaused: boolean; orbitSpeed: number }) => {
   const earthRef = useRef<THREE.Mesh>(null);
@@ -360,13 +361,15 @@ const Scene = ({
       
       {showSolarSystem && <RealisticSun />}
       
-      <Suspense fallback={null}>
-        <Earth isPaused={isPaused} orbitSpeed={orbitSpeed} />
-      </Suspense>
-      <AtmosphereGlow />
-      <Moon orbitSpeed={orbitSpeed} isPaused={isPaused} />
-      <OrbitalRings showOrbits={showOrbits} />
-      <SatellitePoints satellites={satellites} />
+      <EarthOrbitGroup active={!!showSolarSystem} paused={isPaused} speed={0.05 * orbitSpeed}>
+        <Suspense fallback={null}>
+          <Earth isPaused={isPaused} orbitSpeed={orbitSpeed} />
+        </Suspense>
+        <AtmosphereGlow />
+        <Moon orbitSpeed={orbitSpeed} isPaused={isPaused} />
+        <OrbitalRings showOrbits={showOrbits} />
+        <SatellitePoints satellites={satellites} />
+      </EarthOrbitGroup>
       
       {showSolarSystem && (
         <>
