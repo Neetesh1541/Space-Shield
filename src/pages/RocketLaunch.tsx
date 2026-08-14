@@ -435,7 +435,7 @@ const RocketLaunch = () => {
 
 
   return (
-    <div className="min-h-screen bg-background stars-bg">
+    <div className="min-h-screen bg-background stars-bg aurora-bg">
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       
       <div className="flex">

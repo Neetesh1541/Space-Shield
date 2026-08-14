@@ -108,7 +108,7 @@ const MissionControl = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background nebula-bg stars-bg">
+    <div className="min-h-screen bg-background nebula-bg stars-bg aurora-bg grid-overlay">
       <Header onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
