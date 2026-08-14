@@ -16,6 +16,8 @@ import RocketLaunch from "./pages/RocketLaunch";
 import SolarSystem from "./pages/SolarSystem";
 import HelpDocs from "./pages/HelpDocs";
 import Settings from "./pages/Settings";
+import MissionControl from "./pages/MissionControl";
+import SpaceData from "./pages/SpaceData";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +42,8 @@ const App = () => {
             <Route path="/solar-system" element={<SolarSystem />} />
             <Route path="/help-docs" element={<HelpDocs />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/mission-control" element={<MissionControl />} />
+            <Route path="/space-data" element={<SpaceData />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <SpaceChatbot />

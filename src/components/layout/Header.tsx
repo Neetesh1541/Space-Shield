@@ -8,9 +8,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Settings, Menu, Rocket, Globe, HelpCircle, User, LogOut, Crown, Command } from 'lucide-react';
+import { Bell, Settings, Menu, Rocket, Globe, HelpCircle, User, LogOut, Crown, Command, MessageSquareHeart, Radio } from 'lucide-react';
 import logoUrl from '@/assets/spaceshield-logo.png';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { DeveloperMessage } from './DeveloperMessage';
 import { toast } from 'sonner';
 
 interface HeaderProps {
@@ -19,6 +21,7 @@ interface HeaderProps {
 
 export const Header = ({ onMenuToggle }: HeaderProps) => {
   const navigate = useNavigate();
+  const [devOpen, setDevOpen] = useState(false);
 
   return (
     <header className="h-16 border-b border-border/50 bg-card/50 backdrop-blur-xl sticky top-0 z-50">
@@ -74,22 +77,29 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
             <DropdownMenuTrigger asChild>
               <button className="hidden sm:flex ml-2 pl-2 border-l border-border items-center gap-3 hover:opacity-90 transition-opacity">
                 <div className="text-right">
-                  <p className="text-xs font-medium">Neetesh Kumar</p>
+                  <p className="text-xs font-medium">Avtaar</p>
                   <p className="text-[10px] text-muted-foreground">Mission Control</p>
                 </div>
                 <div className="h-9 w-9 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center text-sm font-bold text-primary-foreground ring-2 ring-primary/20">
-                  NK
+                  AV
                 </div>
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56 z-[60]">
               <DropdownMenuLabel>
-                <p className="font-medium">Neetesh Kumar</p>
+                <p className="font-medium">Avtaar</p>
+                <p className="text-[10px] text-muted-foreground font-normal">Neetesh Kumar · Flight Director</p>
                 <p className="text-[10px] text-muted-foreground font-normal">neeteshk1104@gmail.com</p>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate('/mission-control')}>
+                <Radio className="h-4 w-4 mr-2" /> Mission Control Room
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/')}>
-                <User className="h-4 w-4 mr-2" /> Mission Control
+                <User className="h-4 w-4 mr-2" /> Dashboard
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setDevOpen(true)}>
+                <MessageSquareHeart className="h-4 w-4 mr-2 text-primary" /> Message from the developer
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate('/settings')}>
                 <Settings className="h-4 w-4 mr-2" /> Settings
@@ -108,6 +118,7 @@ export const Header = ({ onMenuToggle }: HeaderProps) => {
           </DropdownMenu>
         </div>
       </div>
+      <DeveloperMessage open={devOpen} onOpenChange={setDevOpen} />
     </header>
   );
 };
