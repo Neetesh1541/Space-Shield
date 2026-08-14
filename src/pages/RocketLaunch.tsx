@@ -238,88 +238,192 @@ const Scene = ({ phase, isLaunched, time }: RocketProps) => {
   );
 };
 
+// ---- Vehicle definition (Falcon-9-class two-stage LEO launcher) ----
+const VEHICLE = {
+  dryMass: 25600,          // kg (upper stage + fairing + payload)
+  stage1Prop: 411000,      // kg
+  stage2Prop: 107500,      // kg
+  stage1Mass: 22200,       // kg dry
+  stage1Thrust: 7607000,   // N (sea level)
+  stage1ThrustVac: 8227000,
+  stage2Thrust: 981000,    // N (vacuum)
+  stage1Isp: 282,          // s
+  stage2Isp: 348,          // s
+  dragArea: 10.5,          // m^2
+  cd: 0.3,
+};
+const G0 = 9.80665;
+const R_EARTH = 6371000;
+
 const RocketLaunch = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLaunched, setIsLaunched] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [time, setTime] = useState(0);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const [phase, setPhase] = useState(0);
-  
-  // Telemetry data
+  const [events, setEvents] = useState<{ t: number; msg: string }[]>([]);
+
+  // Live flight state (integrated, not scripted)
   const [telemetry, setTelemetry] = useState({
-    altitude: 0,
-    velocity: 0,
-    acceleration: 0,
-    fuel: 100,
-    temperature: 20,
-    maxQ: 0,
+    altitude: 0,       // m
+    velocity: 0,       // km/h (display)
+    speedMs: 0,        // m/s
+    acceleration: 0,   // m/s^2
+    fuel: 100,         // %
+    temperature: 20,   // °C
+    maxQ: 0,           // kPa
+    dynamicPressure: 0,// kPa
+    gForce: 1,
+    downrange: 0,      // m
+    throttle: 0,       // %
+    mass: VEHICLE.dryMass + VEHICLE.stage1Mass + VEHICLE.stage1Prop + VEHICLE.stage2Prop,
+    apoapsis: 0,       // m
+    pitch: 90,         // deg
   });
 
   const phases = [
     { name: 'Pre-Launch', time: 0 },
-    { name: 'Liftoff', time: 10 },
+    { name: 'Liftoff', time: 1 },
     { name: 'Max-Q', time: 60 },
-    { name: 'Stage 1 Separation', time: 150 },
-    { name: 'Stage 2 Ignition', time: 160 },
+    { name: 'Stage 1 Separation', time: 162 },
+    { name: 'Stage 2 Ignition', time: 168 },
     { name: 'Orbit Insertion', time: 540 },
-    { name: 'Mission Complete', time: 600 },
+    { name: 'Mission Complete', time: 570 },
   ];
+
+  const pushEvent = (t: number, msg: string) =>
+    setEvents((prev) => (prev.some((e) => e.msg === msg) ? prev : [{ t, msg }, ...prev].slice(0, 40)));
+
+  // Terminal countdown
+  useEffect(() => {
+    if (countdown === null) return;
+    if (countdown <= 0) {
+      setCountdown(null);
+      setIsLaunched(true);
+      pushEvent(0, 'Ignition sequence start — liftoff!');
+      return;
+    }
+    const id = setTimeout(() => setCountdown((c) => (c === null ? null : c - 1)), 1000);
+    return () => clearTimeout(id);
+  }, [countdown]);
 
   useEffect(() => {
     if (!isLaunched || isPaused) return;
 
+    const dt = 1; // simulated seconds per tick (10x real time)
     const interval = setInterval(() => {
-      setTime(prev => {
-        const newTime = prev + 1;
-        
-        // Update phase based on time
+      setTime((prevT) => {
+        const t = prevT + dt;
+
         for (let i = phases.length - 1; i >= 0; i--) {
-          if (newTime >= phases[i].time) {
-            setPhase(i);
-            break;
-          }
+          if (t >= phases[i].time) { setPhase(i); break; }
         }
 
-        // Update telemetry
-        setTelemetry(prev => {
-          const altitudeGain = phase >= 1 ? (phase >= 3 ? 150 : 50) : 0;
-          const velocityGain = phase >= 1 ? (phase >= 3 ? 80 : 30) : 0;
-          const fuelConsumption = phase >= 1 && phase < 5 ? 0.15 : 0;
-          
+        setTelemetry((s) => {
+          if (t > 600) return s;
+
+          // --- Guidance: vertical rise then gravity turn ---
+          const pitch = t < 12 ? 90 : Math.max(2, 90 - ((t - 12) / 210) * 88);
+          const pitchRad = (pitch * Math.PI) / 180;
+
+          // --- Propulsion ---
+          const stage1Burn = t <= 162;
+          const stage2Burn = t > 168 && t <= 540;
+          // Max-Q throttle bucket
+          const throttle = stage1Burn ? (t >= 50 && t <= 78 ? 0.72 : 1) : stage2Burn ? 1 : 0;
+
+          const rho = 1.225 * Math.exp(-s.altitude / 8500);
+          const pressureRatio = Math.min(1, rho / 1.225);
+          const thrust = stage1Burn
+            ? (VEHICLE.stage1Thrust * pressureRatio + VEHICLE.stage1ThrustVac * (1 - pressureRatio)) * throttle
+            : stage2Burn
+              ? VEHICLE.stage2Thrust
+              : 0;
+          const isp = stage1Burn ? VEHICLE.stage1Isp : VEHICLE.stage2Isp;
+          const mdot = thrust > 0 ? thrust / (isp * G0) : 0;
+
+          let mass = s.mass - mdot * dt;
+          if (t > 162 && t <= 163) mass -= VEHICLE.stage1Mass; // stage 1 jettison
+          mass = Math.max(VEHICLE.dryMass, mass);
+
+          // --- Forces ---
+          const v = s.speedMs;
+          const q = 0.5 * rho * v * v;                       // Pa
+          const drag = q * VEHICLE.cd * VEHICLE.dragArea;    // N
+          const gLocal = G0 * Math.pow(R_EARTH / (R_EARTH + s.altitude), 2);
+          const centrifugal = (v * Math.cos(pitchRad)) ** 2 / (R_EARTH + s.altitude);
+
+          const aThrust = thrust / mass;
+          const aDrag = drag / mass;
+          const aNet = aThrust - aDrag - (gLocal - centrifugal) * Math.sin(pitchRad);
+
+          const speedMs = Math.max(0, v + aNet * dt);
+          const altitude = Math.max(0, s.altitude + speedMs * Math.sin(pitchRad) * dt);
+          const downrange = s.downrange + speedMs * Math.cos(pitchRad) * dt;
+
+          // --- Consumables / thermal ---
+          const totalProp = VEHICLE.stage1Prop + VEHICLE.stage2Prop;
+          const usedProp = totalProp - Math.max(0, mass - VEHICLE.dryMass - (t <= 162 ? VEHICLE.stage1Mass : 0));
+          const fuel = Math.max(0, 100 - (usedProp / totalProp) * 100);
+          const temperature = Math.round(20 + (q / 1000) * 22 + (speedMs > 2000 ? (speedMs - 2000) * 0.35 : 0));
+          const qkPa = q / 1000;
+
+          // --- Callouts ---
+          if (t === 12) pushEvent(t, 'Pitch-over initiated — beginning gravity turn.');
+          if (t === 50) pushEvent(t, 'Throttling down for Max-Q.');
+          if (qkPa > s.maxQ && t > 40 && t < 90 && qkPa > 25) pushEvent(t, `Max-Q ${qkPa.toFixed(1)} kPa — vehicle at maximum dynamic pressure.`);
+          if (t === 79) pushEvent(t, 'Throttle up — Max-Q passed.');
+          if (t === 162) pushEvent(t, 'MECO — main engine cutoff.');
+          if (t === 164) pushEvent(t, 'Stage separation confirmed.');
+          if (t === 168) pushEvent(t, 'Second-stage ignition (SES-1).');
+          if (t === 200) pushEvent(t, 'Fairing jettison — payload exposed to vacuum.');
+          if (t === 540) pushEvent(t, 'SECO — orbital velocity achieved.');
+          if (t === 560) pushEvent(t, 'Payload deploy — nominal insertion.');
+
           return {
-            altitude: Math.min(prev.altitude + altitudeGain, 400000),
-            velocity: Math.min(prev.velocity + velocityGain, 28000),
-            acceleration: phase >= 1 ? (phase === 2 ? 35 : phase >= 3 ? 25 : 15) : 0,
-            fuel: Math.max(prev.fuel - fuelConsumption, 0),
-            temperature: phase >= 1 ? (phase === 2 ? 1500 : 800) : 20,
-            maxQ: phase === 2 ? 100 : prev.maxQ,
+            altitude,
+            speedMs,
+            velocity: speedMs * 3.6,
+            acceleration: aNet,
+            fuel,
+            temperature,
+            maxQ: Math.max(s.maxQ, qkPa),
+            dynamicPressure: qkPa,
+            gForce: Math.max(0, aThrust / G0),
+            downrange,
+            throttle: throttle * 100,
+            mass,
+            apoapsis: altitude + (speedMs * Math.cos(pitchRad)) ** 2 / (2 * gLocal),
+            pitch,
           };
         });
 
-        return newTime;
+        return t;
       });
     }, 100);
 
     return () => clearInterval(interval);
-  }, [isLaunched, isPaused, phase]);
+  }, [isLaunched, isPaused]);
 
   const handleLaunch = () => {
-    setIsLaunched(true);
     setIsPaused(false);
+    setCountdown(10);
+    setEvents([{ t: 0, msg: 'Terminal count started — T-10 seconds.' }]);
   };
 
   const handleReset = () => {
     setIsLaunched(false);
     setIsPaused(false);
+    setCountdown(null);
     setTime(0);
     setPhase(0);
+    setEvents([]);
     setTelemetry({
-      altitude: 0,
-      velocity: 0,
-      acceleration: 0,
-      fuel: 100,
-      temperature: 20,
-      maxQ: 0,
+      altitude: 0, velocity: 0, speedMs: 0, acceleration: 0, fuel: 100,
+      temperature: 20, maxQ: 0, dynamicPressure: 0, gForce: 1, downrange: 0,
+      throttle: 0, mass: VEHICLE.dryMass + VEHICLE.stage1Mass + VEHICLE.stage1Prop + VEHICLE.stage2Prop,
+      apoapsis: 0, pitch: 90,
     });
   };
 
@@ -328,6 +432,7 @@ const RocketLaunch = () => {
     const secs = seconds % 60;
     return `T+${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
+
 
   return (
     <div className="min-h-screen bg-background stars-bg">
