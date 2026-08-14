@@ -328,7 +328,7 @@ const Scene = ({ satellites, showSolarSystem = false, onSelectSatellite, selecte
       
       <Stars radius={100} depth={50} count={showSolarSystem ? 6000 : 12000} factor={4} saturation={0} fade speed={1} />
       
-      {showSolarSystem && <RealisticSun />}
+      {showSolarSystem && <RealisticSun position={[0, 0, 0]} size={2.2} />}
       
       <EarthOrbitGroup active={showSolarSystem}>
         <Suspense fallback={null}>
@@ -359,7 +359,7 @@ const Scene = ({ satellites, showSolarSystem = false, onSelectSatellite, selecte
         enableZoom={true}
         enablePan={true}
         minDistance={1.5}
-        maxDistance={showSolarSystem ? 50 : 10}
+        maxDistance={showSolarSystem ? 80 : 10}
         autoRotate
         autoRotateSpeed={0.15}
       />
@@ -384,7 +384,7 @@ export const EarthScene = ({ satellites, showSolarSystem = false, onSelectSatell
     <div className="w-full h-full relative">
       <Suspense fallback={<LoadingFallback />}>
         <Canvas
-          camera={{ position: showSolarSystem ? [0, 5, 15] : [0, 0, 3], fov: 45 }}
+          camera={{ position: showSolarSystem ? [0, 12, 28] : [0, 0, 3], fov: 45 }}
           gl={{ antialias: true, alpha: true }}
         >
           <Scene satellites={satellites} showSolarSystem={showSolarSystem} onSelectSatellite={onSelectSatellite} selectedId={selectedId} />
